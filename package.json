@@ -1,6 +1,12 @@
 {
   "name": "frontier",
   "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {}
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsup"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
+  }
 }

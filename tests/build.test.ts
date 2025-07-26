@@ -1,28 +1,59 @@
-import { describe, expect, test } from "vitest";
-import { build } from "../src/index";
-import { MockModule } from "./mocks/modules/MockModule";
-import { ReadonlyMap } from "../src/utils/ReadonlyMap";
+import { beforeEach, describe, expect, test } from "vitest";
+import { Builder } from "../src/index";
+import { mockModule, MockModule } from "./mocks/modules/MockModule";
 
-describe(build.name, () => {
+describe(Builder.name, () => {
+  let builder = new Builder();
+
+  beforeEach(() => {
+    builder = new Builder();
+  });
+
   test("should create modules", () => {
-    const result = build({
+    const result = builder.build({
       modules: {
         module1: {
-          constructor: (props) => new MockModule(props),
+          constructor: mockModule,
           arguments: {
             foo: "bar",
           },
         },
         module2: {
-          constructor: (props) => new MockModule(props),
+          constructor: mockModule,
           arguments: {
             zoo: "boo",
           },
         },
       },
     });
-    expect(result).instanceOf(ReadonlyMap);
-    expect(result.get("module1").props).toEqual({ foo: "bar" });
-    expect(result.get("module2").props).toEqual({ zoo: "boo" });
+    expect((result.get("module1") as MockModule).props).toEqual({ foo: "bar" });
+    expect((result.get("module2") as MockModule).props).toEqual({ zoo: "boo" });
+  });
+
+  test("dependencies inject should work", () => {
+    const result = builder.build({
+      modules: {
+        a: {
+          constructor: mockModule,
+          dependencies: ["b", "c"],
+        },
+        b: {
+          constructor: mockModule,
+        },
+        c: {
+          constructor: mockModule,
+          dependencies: ["b"],
+        },
+      },
+    });
+    expect((result.get("a") as MockModule).props.dependencies.get("b")).toEqual(
+      result.get("b")
+    );
+    expect((result.get("a") as MockModule).props.dependencies.get("c")).toEqual(
+      result.get("c")
+    );
+    expect((result.get("c") as MockModule).props.dependencies.get("b")).toEqual(
+      result.get("b")
+    );
   });
 });

@@ -5,3 +5,5 @@ export class MockModule {
     this.props = props;
   }
 }
+
+export const mockModule = (props) => new MockModule(props);

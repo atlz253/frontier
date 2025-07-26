@@ -7,11 +7,6 @@
     "test": "vitest"
   },
   "devDependencies": {
-    "@types/graphlib": "^2.1.12",
-    "@types/graphlib-dot": "^0.6.4",
-    "@viz-js/viz": "^3.15.0",
-    "graphlib": "^2.1.8",
-    "graphlib-dot": "^0.6.4",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"

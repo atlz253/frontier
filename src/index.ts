@@ -1,14 +1,20 @@
 import strings from "./strings";
 import { cloneDeep } from "lodash";
 
-interface ModuleConfig {
-  arguments: { [key: string]: unknown };
+interface ModuleConfig<Arguments extends object = {}, Result = unknown> {
+  arguments: Omit<Arguments, "dependencies">;
   dependencies: string[];
-  builder: (props: object | undefined) => unknown | Promise<unknown>;
+  builder: (props: Arguments) => Result | Promise<Result>;
 }
 
 export interface BuildConfig {
-  modules?: Record<string, Partial<ModuleConfig>>;
+  modules?: Record<string, Partial<ModuleConfig<any, any>>>;
+}
+
+export function defineModule<Arguments extends object, Result>(
+  config: Partial<ModuleConfig<Arguments, Result>>
+): Partial<ModuleConfig<Arguments, Result>> {
+  return config;
 }
 
 export class ConfigComposer {

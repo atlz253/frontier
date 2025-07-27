@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { BuildConfig, Builder, ConfigComposer } from "../src/index";
+import {
+  BuildConfig,
+  Builder,
+  ConfigComposer,
+  defineModule,
+} from "../src/index";
 import { mockModule, MockModule } from "./mocks/modules/MockModule";
 import strings from "../src/strings";
 
@@ -13,18 +18,18 @@ describe(Builder.name, () => {
   test("modules create", async () => {
     const result = await builder.build({
       modules: {
-        module1: {
+        module1: defineModule({
           builder: mockModule,
           arguments: {
             foo: "bar",
           },
-        },
-        module2: {
+        }),
+        module2: defineModule({
           builder: mockModule,
           arguments: {
             zoo: "boo",
           },
-        },
+        }),
       },
     });
     expect((result["module1"] as MockModule).props).toEqual({ foo: "bar" });
@@ -34,17 +39,17 @@ describe(Builder.name, () => {
   test("dependencies inject", async () => {
     const result = await builder.build({
       modules: {
-        a: {
+        a: defineModule({
           builder: mockModule,
           dependencies: ["b", "c"],
-        },
-        b: {
+        }),
+        b: defineModule({
           builder: mockModule,
-        },
-        c: {
+        }),
+        c: defineModule({
           builder: mockModule,
           dependencies: ["b"],
-        },
+        }),
       },
     });
     expect((result["a"] as MockModule).props.dependencies["b"]).toEqual(
@@ -62,14 +67,19 @@ describe(Builder.name, () => {
     expect(
       async () =>
         await builder.build({
-          modules: { a: { builder: mockModule, dependencies: ["b", "c"] } },
+          modules: {
+            a: defineModule({ builder: mockModule, dependencies: ["b", "c"] }),
+          },
         })
     ).rejects.toThrowError(strings.error.missingDependencies(["b", "c"]));
   });
 
   test("throw error if builder missing", async () => {
     expect(
-      async () => await builder.build({ modules: { a: {} } })
+      async () =>
+        await builder.build({
+          modules: { a: defineModule({}) },
+        })
     ).rejects.toThrowError(strings.error.missingBuilder("a"));
   });
 
@@ -77,28 +87,28 @@ describe(Builder.name, () => {
     const result = await builder.build(
       {
         modules: {
-          a: {
+          a: defineModule({
             builder: mockModule,
             arguments: { foo: "baz" },
             dependencies: ["b", "c"],
-          },
-          b: {
+          }),
+          b: defineModule({
             arguments: { doo: "zoo" },
-          },
+          }),
         },
       },
       {
         modules: {
-          b: { builder: mockModule },
-          c: { builder: mockModule, arguments: { goo: "dfd" } },
+          b: defineModule({ builder: mockModule }),
+          c: defineModule({ builder: mockModule, arguments: { goo: "dfd" } }),
         },
       },
       {
         modules: {
-          a: {
+          a: defineModule({
             arguments: { foo: "test", zoo: "doo" },
             dependencies: ["b"],
-          },
+          }),
         },
       }
     );
@@ -113,7 +123,9 @@ describe(Builder.name, () => {
 
   test("await builder functions", async () => {
     const result = await builder.build({
-      modules: { a: { builder: async (props) => new MockModule(props) } },
+      modules: {
+        a: defineModule({ builder: async (props) => new MockModule(props) }),
+      },
     });
     expect(result["a"]).instanceOf(MockModule);
   });
@@ -127,18 +139,23 @@ describe(ConfigComposer.name, () => {
   });
 
   test("return config if overrides missing", () => {
-    const config: BuildConfig = { modules: { a: { builder: mockModule } } };
+    const config: BuildConfig = {
+      modules: { a: defineModule({ builder: mockModule }) },
+    };
     expect(composer.override(config)).toBe(config);
   });
 
   test("modules merge", () => {
     expect(
       composer.override(
-        { modules: { a: { builder: mockModule } } },
-        { modules: { b: { builder: mockModule } } }
+        { modules: { a: defineModule({ builder: mockModule }) } },
+        { modules: { b: defineModule({ builder: mockModule }) } }
       )
     ).toEqual({
-      modules: { a: { builder: mockModule }, b: { builder: mockModule } },
+      modules: {
+        a: defineModule({ builder: mockModule }),
+        b: defineModule({ builder: mockModule }),
+      },
     });
   });
 
@@ -149,30 +166,30 @@ describe(ConfigComposer.name, () => {
       composer.override(
         {
           modules: {
-            a: {
+            a: defineModule({
               builder: builder1,
               arguments: { foo: "bar", bar: "baz" },
               dependencies: ["b", "c"],
-            },
+            }),
           },
         },
         {
           modules: {
-            a: {
+            a: defineModule({
               builder: builder2,
               arguments: { foo: "zoo", dee: "gee" },
               dependencies: ["e", "f"],
-            },
+            }),
           },
         }
       )
     ).toEqual({
       modules: {
-        a: {
+        a: defineModule({
           builder: builder2,
           arguments: { foo: "zoo", bar: "baz", dee: "gee" },
           dependencies: ["e", "f"],
-        },
+        }),
       },
     });
   });

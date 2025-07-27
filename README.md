@@ -9,22 +9,22 @@ The Builder builds modules one at a time, passing arguments and dependencies to 
 > ⚠️ **Warning:** all dependencies in dependencies objects will be available only after the completion of the Builder.build method, so you should avoid getting dependencies in builder functions
 
 ```JavaScript
-import { Builder } from "frontier";
+import { Builder, defineModule } from "@atlz253/frontier";
 import { Main } from "./src/main/index.js";
 import { Orders } from "./src/orders/index.js";
 import { Cart } from "./src/cart/index.js";
 
 const modules = new Builder().build({
   modules: {
-    main: {
+    main: defineModule({
       builder: (props) => new Main(props), // new Main({ logger: true, debug: false, dependencies: {orders: Orders, cart: Cart}})
       arguments: {
         logger: true,
         debug: false
       },
       dependencies: ["orders", "cart"]
-    },
-    orders: {
+    }),
+    orders: defineModule({
       builder: (props) => new Orders(props), // new Orders({db: {...}})
       arguments: {
         db: {
@@ -34,11 +34,11 @@ const modules = new Builder().build({
           database: "orders",
         }
       },
-    },
-    cart: {
+    }),
+    cart: defineModule({
       builder: (props) => new Cart(props), // new Cart({dependencies: {orders: Orders}})
       dependencies: ["orders"]
-    }
+    })
   }
 })
 
@@ -54,20 +54,20 @@ It is possible to transfer several configurations at once, single configuration 
 new Builder.build(
   {
     modules: {
-      a: {
+      a: defineModule({
         builder: builder1,
         arguments: { foo: "bar", bar: "baz" },
         dependencies: ["b", "c"],
-      },
+      }),
     },
   },
   {
     modules: {
-      a: {
+      a: defineModule({
         builder: builder2,
         arguments: { foo: "zoo", dee: "gee" },
         dependencies: ["e", "f"],
-      },
+      }),
     },
   }
 )

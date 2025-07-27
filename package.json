@@ -29,5 +29,10 @@
       "import": "./dist/index.js",
       "require": "./dist/index.mjs"
     }
-  }
+  },
+  "keywords": [
+    "modular-monolith",
+    "browser",
+    "nodejs"
+  ]
 }

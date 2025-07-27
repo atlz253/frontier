@@ -4,9 +4,9 @@ The library helps build and manage modular monolith
 
 ## Build configuration
 
-The Builder builds modules one at a time, passing arguments and dependencies to the constructor
+The Builder builds modules one at a time, passing arguments and dependencies to the builder function
 
-> ⚠️ **Warning:** all dependencies in dependencies objects will be available only after the completion of the Builder.build method, so you should avoid getting dependencies in constructor functions
+> ⚠️ **Warning:** all dependencies in dependencies objects will be available only after the completion of the Builder.build method, so you should avoid getting dependencies in builder functions
 
 ```JavaScript
 import { Builder } from "frontier";
@@ -17,7 +17,7 @@ import { Cart } from "./src/cart/index.js";
 const modules = new Builder().build({
   modules: {
     main: {
-      constructor: (props) => new Main(props), // new Main({ logger: true, debug: false, dependencies: {orders: Orders, cart: Cart}})
+      builder: (props) => new Main(props), // new Main({ logger: true, debug: false, dependencies: {orders: Orders, cart: Cart}})
       arguments: {
         logger: true,
         debug: false
@@ -25,7 +25,7 @@ const modules = new Builder().build({
       dependencies: ["orders", "cart"]
     },
     orders: {
-      constructor: (props) => new Orders(props), // new Orders({db: {...}})
+      builder: (props) => new Orders(props), // new Orders({db: {...}})
       arguments: {
         db: {
           host: "localhost",
@@ -36,7 +36,7 @@ const modules = new Builder().build({
       },
     },
     cart: {
-      constructor: (props) => new Cart(props), // new Cart({dependencies: {orders: Orders}})
+      builder: (props) => new Cart(props), // new Cart({dependencies: {orders: Orders}})
       dependencies: ["orders"]
     }
   }

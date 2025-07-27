@@ -14,13 +14,13 @@ describe(Builder.name, () => {
     const result = builder.build({
       modules: {
         module1: {
-          constructor: mockModule,
+          builder: mockModule,
           arguments: {
             foo: "bar",
           },
         },
         module2: {
-          constructor: mockModule,
+          builder: mockModule,
           arguments: {
             zoo: "boo",
           },
@@ -35,14 +35,14 @@ describe(Builder.name, () => {
     const result = builder.build({
       modules: {
         a: {
-          constructor: mockModule,
+          builder: mockModule,
           dependencies: ["b", "c"],
         },
         b: {
-          constructor: mockModule,
+          builder: mockModule,
         },
         c: {
-          constructor: mockModule,
+          builder: mockModule,
           dependencies: ["b"],
         },
       },
@@ -61,7 +61,7 @@ describe(Builder.name, () => {
   test("should throw error if dependency missing", () => {
     expect(() =>
       builder.build({
-        modules: { a: { constructor: mockModule, dependencies: ["b", "c"] } },
+        modules: { a: { builder: mockModule, dependencies: ["b", "c"] } },
       })
     ).toThrowError(strings.error.missingDependencies(["b", "c"]));
   });

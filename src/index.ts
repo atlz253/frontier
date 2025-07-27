@@ -3,9 +3,7 @@ import strings from "./strings";
 interface ModuleConfig<T extends object = {}> {
   arguments?: T;
   dependencies?: string[];
-  constructor: (
-    props: T & { dependencies?: { [name: string]: unknown } }
-  ) => any;
+  builder: (props: T & { dependencies?: { [name: string]: unknown } }) => any;
 }
 
 type BuildConfig = {
@@ -56,7 +54,7 @@ export class Builder {
   }
 
   #buildModule({ name, options }: { name: string; options: ModuleConfig }) {
-    const result = options.constructor({
+    const result = options.builder({
       ...options.arguments,
       dependencies: this.#dependencies(options.dependencies),
     });

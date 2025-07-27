@@ -1,5 +1,5 @@
 {
-  "name": "frontier",
+  "name": "@atlz253/frontier",
   "version": "1.0.0",
   "main": "src/index.ts",
   "license": "MIT",

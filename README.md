@@ -1,6 +1,6 @@
 # Frontier
 
-The library helps build and manage modular monolith
+The library helps build modular monolith
 
 ## Build configuration
 

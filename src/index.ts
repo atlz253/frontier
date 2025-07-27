@@ -1,3 +1,5 @@
+import strings from "./strings";
+
 interface ModuleConfig<T extends object = {}> {
   arguments?: T;
   dependencies?: string[];
@@ -12,9 +14,14 @@ export class Builder {
   #modules: Map<string, unknown> = new Map();
   #expectDependencies: Map<string, Map<string, unknown>[]> = new Map();
 
+  get #missingDependencies() {
+    return Array.from(this.#expectDependencies.keys());
+  }
+
   build(config: BuildConfig) {
     this.#clear();
     this.#buildModules(config);
+    this.#throwErrorIfHasMissingDependencies();
     return this.#modules;
   }
 
@@ -33,15 +40,6 @@ export class Builder {
       );
   }
 
-  #buildModule({ name, options }: { name: string; options: ModuleConfig }) {
-    const result = options.constructor({
-      ...options.arguments,
-      dependencies: this.#dependencies(options.dependencies),
-    });
-    this.#modules.set(name, result);
-    return result;
-  }
-
   #resolveExpectDependencies({
     name,
     module,
@@ -55,6 +53,15 @@ export class Builder {
     }
   }
 
+  #buildModule({ name, options }: { name: string; options: ModuleConfig }) {
+    const result = options.constructor({
+      ...options.arguments,
+      dependencies: this.#dependencies(options.dependencies),
+    });
+    this.#modules.set(name, result);
+    return result;
+  }
+
   #dependencies(dependencies: string[] | undefined) {
     if (dependencies === undefined) return undefined;
     const result = new Map<string, unknown>();
@@ -66,5 +73,12 @@ export class Builder {
         : this.#expectDependencies.set(d, [result])
     );
     return result;
+  }
+
+  #throwErrorIfHasMissingDependencies() {
+    if (this.#missingDependencies.length > 0)
+      throw new Error(
+        strings.error.missingDependencies(this.#missingDependencies)
+      );
   }
 }

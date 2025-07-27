@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { Builder } from "../src/index";
 import { mockModule, MockModule } from "./mocks/modules/MockModule";
+import strings from "../src/strings";
 
 describe(Builder.name, () => {
   let builder = new Builder();
@@ -55,5 +56,13 @@ describe(Builder.name, () => {
     expect((result.get("c") as MockModule).props.dependencies.get("b")).toEqual(
       result.get("b")
     );
+  });
+
+  test("should throw error if dependency missing", () => {
+    expect(() =>
+      builder.build({
+        modules: { a: { constructor: mockModule, dependencies: ["b", "c"] } },
+      })
+    ).toThrowError(strings.error.missingDependencies(["b", "c"]));
   });
 });

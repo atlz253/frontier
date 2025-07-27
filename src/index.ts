@@ -3,7 +3,9 @@ import strings from "./strings";
 interface ModuleConfig<T extends object = {}> {
   arguments?: T;
   dependencies?: string[];
-  constructor: (props: T & { dependencies?: Map<string, unknown> }) => any;
+  constructor: (
+    props: T & { dependencies?: { [name: string]: unknown } }
+  ) => any;
 }
 
 type BuildConfig = {
@@ -11,8 +13,8 @@ type BuildConfig = {
 };
 
 export class Builder {
-  #modules: Map<string, unknown> = new Map();
-  #expectDependencies: Map<string, Map<string, unknown>[]> = new Map();
+  #modules: { [name: string]: unknown } = {};
+  #expectDependencies: Map<string, { [key: string]: unknown }[]> = new Map();
 
   get #missingDependencies() {
     return Array.from(this.#expectDependencies.keys());
@@ -26,7 +28,7 @@ export class Builder {
   }
 
   #clear() {
-    this.#modules = new Map(); // TODO: to object
+    this.#modules = {};
     this.#expectDependencies = new Map();
   }
 
@@ -48,7 +50,7 @@ export class Builder {
     module: unknown;
   }) {
     if (this.#expectDependencies.has(name)) {
-      this.#expectDependencies.get(name)?.forEach((m) => m.set(name, module));
+      this.#expectDependencies.get(name)?.forEach((m) => (m[name] = module));
       this.#expectDependencies.delete(name);
     }
   }
@@ -58,16 +60,16 @@ export class Builder {
       ...options.arguments,
       dependencies: this.#dependencies(options.dependencies),
     });
-    this.#modules.set(name, result);
+    this.#modules[name] = result;
     return result;
   }
 
   #dependencies(dependencies: string[] | undefined) {
     if (dependencies === undefined) return undefined;
-    const result = new Map<string, unknown>();
+    const result: { [name: string]: unknown } = {};
     dependencies.forEach((d) =>
-      this.#modules.has(d)
-        ? result.set(d, this.#modules.get(d))
+      d in this.#modules
+        ? (result[d] = this.#modules[d])
         : this.#expectDependencies.has(d)
         ? this.#expectDependencies.get(d)?.push(result)
         : this.#expectDependencies.set(d, [result])

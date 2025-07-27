@@ -27,8 +27,8 @@ describe(Builder.name, () => {
         },
       },
     });
-    expect((result.get("module1") as MockModule).props).toEqual({ foo: "bar" });
-    expect((result.get("module2") as MockModule).props).toEqual({ zoo: "boo" });
+    expect((result["module1"] as MockModule).props).toEqual({ foo: "bar" });
+    expect((result["module2"] as MockModule).props).toEqual({ zoo: "boo" });
   });
 
   test("dependencies inject should work", () => {
@@ -47,14 +47,14 @@ describe(Builder.name, () => {
         },
       },
     });
-    expect((result.get("a") as MockModule).props.dependencies.get("b")).toEqual(
-      result.get("b")
+    expect((result["a"] as MockModule).props.dependencies["b"]).toEqual(
+      result["b"]
     );
-    expect((result.get("a") as MockModule).props.dependencies.get("c")).toEqual(
-      result.get("c")
+    expect((result["a"] as MockModule).props.dependencies["c"]).toEqual(
+      result["c"]
     );
-    expect((result.get("c") as MockModule).props.dependencies.get("b")).toEqual(
-      result.get("b")
+    expect((result["c"] as MockModule).props.dependencies["b"]).toEqual(
+      result["b"]
     );
   });
 

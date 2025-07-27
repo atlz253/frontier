@@ -1,6 +1,6 @@
 {
   "name": "@atlz253/frontier",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "main": "src/index.ts",
   "license": "MIT",
   "author": "Fedor Alekseev",

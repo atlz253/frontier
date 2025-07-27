@@ -1,16 +1,65 @@
 import strings from "./strings";
+import { cloneDeep } from "lodash";
 
-interface ModuleConfig<T extends object = {}> {
-  arguments?: T;
-  dependencies?: string[];
-  builder: (props: T & { dependencies?: { [name: string]: unknown } }) => any;
+interface ModuleConfig<T extends object = { [key: string]: unknown }> {
+  arguments: T;
+  dependencies: string[];
+  builder: (props: T & { dependencies?: { [name: string]: unknown } }) => any; // TODO: throw error if builder missing
 }
 
-type BuildConfig = {
-  modules?: Record<string, ModuleConfig>;
-};
+export interface BuildConfig {
+  modules?: Record<string, Partial<ModuleConfig>>;
+}
+
+export class ConfigComposer {
+  #result: BuildConfig = { modules: {} };
+
+  override(config: BuildConfig, ...overrides: BuildConfig[]) {
+    if (overrides.length === 0) return config;
+    this.#result = cloneDeep(config);
+    overrides.forEach((o) => this.#merge(o));
+    return this.#result;
+  }
+
+  #merge(config: BuildConfig) {
+    if ("modules" in config && config.modules)
+      Object.entries(config.modules).forEach(([name, options]) =>
+        this.#result.modules && name in this.#result.modules
+          ? this.#mergeModuleConfig(name, options)
+          : this.#addModuleConfig(name, options)
+      );
+  }
+
+  #mergeModuleConfig(name: string, options: Partial<ModuleConfig>) {
+    if (!this.#result.modules || !(name in this.#result.modules))
+      throw new Error(strings.error.moduleConfigNotFound(name));
+    const result = cloneDeep(this.#result.modules[name]);
+    if ("builder" in options) result.builder = options.builder;
+    if ("arguments" in options) {
+      if ("arguments" in result && options.arguments) {
+        Object.entries(options.arguments).forEach(([key, value]) => {
+          result.arguments
+            ? (result.arguments[key] = value)
+            : (result.arguments = { [key]: value });
+        });
+      } else {
+        result.arguments = cloneDeep(options.arguments);
+      }
+    }
+    if ("dependencies" in options)
+      result.dependencies = cloneDeep(options.dependencies);
+    this.#result.modules[name] = result;
+  }
+
+  #addModuleConfig(name: string, options: Partial<ModuleConfig>) {
+    this.#result.modules
+      ? (this.#result.modules[name] = cloneDeep(options))
+      : (this.#result.modules = { name: cloneDeep(options) });
+  }
+}
 
 export class Builder {
+  #config: BuildConfig = {};
   #modules: { [name: string]: unknown } = {};
   #expectDependencies: Map<string, { [key: string]: unknown }[]> = new Map();
 
@@ -18,9 +67,13 @@ export class Builder {
     return Array.from(this.#expectDependencies.keys());
   }
 
-  build(config: BuildConfig) {
+  build(config: BuildConfig, ...overrides: BuildConfig[]) {
     this.#clear();
-    this.#buildModules(config);
+    this.#config =
+      overrides.length === 0
+        ? config
+        : new ConfigComposer().override(config, ...overrides);
+    this.#buildModules(this.#config);
     this.#throwErrorIfHasMissingDependencies();
     return this.#modules;
   }
@@ -53,7 +106,14 @@ export class Builder {
     }
   }
 
-  #buildModule({ name, options }: { name: string; options: ModuleConfig }) {
+  #buildModule({
+    name,
+    options,
+  }: {
+    name: string;
+    options: Partial<ModuleConfig>;
+  }) {
+    if (!options.builder) throw new Error(strings.error.missingBuilder(name));
     const result = options.builder({
       ...options.arguments,
       dependencies: this.#dependencies(options.dependencies),

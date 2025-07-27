@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { Builder } from "../src/index";
+import { BuildConfig, Builder, ConfigComposer } from "../src/index";
 import { mockModule, MockModule } from "./mocks/modules/MockModule";
 import strings from "../src/strings";
 
@@ -10,7 +10,7 @@ describe(Builder.name, () => {
     builder = new Builder();
   });
 
-  test("should create modules", () => {
+  test("modules create", () => {
     const result = builder.build({
       modules: {
         module1: {
@@ -31,7 +31,7 @@ describe(Builder.name, () => {
     expect((result["module2"] as MockModule).props).toEqual({ zoo: "boo" });
   });
 
-  test("dependencies inject should work", () => {
+  test("dependencies inject", () => {
     const result = builder.build({
       modules: {
         a: {
@@ -58,11 +58,114 @@ describe(Builder.name, () => {
     );
   });
 
-  test("should throw error if dependency missing", () => {
+  test("throw error if dependency missing", () => {
     expect(() =>
       builder.build({
         modules: { a: { builder: mockModule, dependencies: ["b", "c"] } },
       })
     ).toThrowError(strings.error.missingDependencies(["b", "c"]));
+  });
+
+  test("throw error if builder missing", () => {
+    expect(() => builder.build({ modules: { a: {} } })).toThrowError(
+      strings.error.missingBuilder("a")
+    );
+  });
+
+  test("build with overrides", () => {
+    const result = builder.build(
+      {
+        modules: {
+          a: {
+            builder: mockModule,
+            arguments: { foo: "baz" },
+            dependencies: ["b", "c"],
+          },
+          b: {
+            arguments: { doo: "zoo" },
+          },
+        },
+      },
+      {
+        modules: {
+          b: { builder: mockModule },
+          c: { builder: mockModule, arguments: { goo: "dfd" } },
+        },
+      },
+      {
+        modules: {
+          a: {
+            arguments: { foo: "test", zoo: "doo" },
+            dependencies: ["b"],
+          },
+        },
+      }
+    );
+    expect((result["a"] as MockModule).props).toEqual({
+      foo: "test",
+      zoo: "doo",
+      dependencies: { b: result["b"] },
+    });
+    expect((result["b"] as MockModule).props).toEqual({ doo: "zoo" });
+    expect((result["c"] as MockModule).props).toEqual({ goo: "dfd" });
+  });
+});
+
+describe(ConfigComposer.name, () => {
+  let composer = new ConfigComposer();
+
+  beforeEach(() => {
+    composer = new ConfigComposer();
+  });
+
+  test("return config if overrides missing", () => {
+    const config: BuildConfig = { modules: { a: { builder: mockModule } } };
+    expect(composer.override(config)).toBe(config);
+  });
+
+  test("modules merge", () => {
+    expect(
+      composer.override(
+        { modules: { a: { builder: mockModule } } },
+        { modules: { b: { builder: mockModule } } }
+      )
+    ).toEqual({
+      modules: { a: { builder: mockModule }, b: { builder: mockModule } },
+    });
+  });
+
+  test("module options override", () => {
+    const builder1 = (props) => new MockModule(props);
+    const builder2 = (props) => new MockModule(props);
+    expect(
+      composer.override(
+        {
+          modules: {
+            a: {
+              builder: builder1,
+              arguments: { foo: "bar", bar: "baz" },
+              dependencies: ["b", "c"],
+            },
+          },
+        },
+        {
+          modules: {
+            a: {
+              builder: builder2,
+              arguments: { foo: "zoo", dee: "gee" },
+              dependencies: ["e", "f"],
+            },
+          },
+        }
+      )
+    ).toEqual({
+      modules: {
+        a: {
+          builder: builder2,
+          arguments: { foo: "zoo", bar: "baz", dee: "gee" },
+          dependencies: ["e", "f"],
+        },
+      },
+    });
   });
 });

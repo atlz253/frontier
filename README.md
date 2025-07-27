@@ -44,3 +44,41 @@ const modules = new Builder().build({
 
 modules.get("main").start();
 ```
+
+### Config overrides
+
+It is possible to transfer several configurations at once, single configuration with overwritten values will be formed based on them
+
+```JavaScript
+// several configurations
+new Builder.build(
+  {
+    modules: {
+      a: {
+        builder: builder1,
+        arguments: { foo: "bar", bar: "baz" },
+        dependencies: ["b", "c"],
+      },
+    },
+  },
+  {
+    modules: {
+      a: {
+        builder: builder2,
+        arguments: { foo: "zoo", dee: "gee" },
+        dependencies: ["e", "f"],
+      },
+    },
+  }
+)
+// equivalent to
+new Builder.build(
+  modules: {
+    a: {
+      builder: builder2,
+      arguments: { foo: "zoo", bar: "baz", dee: "gee" },
+      dependencies: ["e", "f"],
+    },
+  },
+)
+```

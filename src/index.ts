@@ -4,7 +4,9 @@ import { cloneDeep } from "lodash";
 interface ModuleConfig<T extends object = { [key: string]: unknown }> {
   arguments: T;
   dependencies: string[];
-  builder: (props: T & { dependencies?: { [name: string]: unknown } }) => any; // TODO: throw error if builder missing
+  builder: (
+    props: T & { dependencies?: { [name: string]: unknown } }
+  ) => unknown | Promise<unknown>;
 }
 
 export interface BuildConfig {
@@ -67,13 +69,13 @@ export class Builder {
     return Array.from(this.#expectDependencies.keys());
   }
 
-  build(config: BuildConfig, ...overrides: BuildConfig[]) {
+  async build(config: BuildConfig, ...overrides: BuildConfig[]) {
     this.#clear();
     this.#config =
       overrides.length === 0
         ? config
         : new ConfigComposer().override(config, ...overrides);
-    this.#buildModules(this.#config);
+    await this.#buildModules(this.#config);
     this.#throwErrorIfHasMissingDependencies();
     return this.#modules;
   }
@@ -83,14 +85,14 @@ export class Builder {
     this.#expectDependencies = new Map();
   }
 
-  #buildModules(config: BuildConfig) {
+  async #buildModules(config: BuildConfig) {
     if (config.modules)
-      Object.entries(config.modules).forEach(([name, options]) =>
+      for (const [name, options] of Object.entries(config.modules)) {
         this.#resolveExpectDependencies({
           name,
-          module: this.#buildModule({ name, options }),
-        })
-      );
+          module: await this.#buildModule({ name, options }),
+        });
+      }
   }
 
   #resolveExpectDependencies({
@@ -106,7 +108,7 @@ export class Builder {
     }
   }
 
-  #buildModule({
+  async #buildModule({
     name,
     options,
   }: {
@@ -114,7 +116,7 @@ export class Builder {
     options: Partial<ModuleConfig>;
   }) {
     if (!options.builder) throw new Error(strings.error.missingBuilder(name));
-    const result = options.builder({
+    const result = await options.builder({
       ...options.arguments,
       dependencies: this.#dependencies(options.dependencies),
     });

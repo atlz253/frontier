@@ -10,8 +10,8 @@ describe(Builder.name, () => {
     builder = new Builder();
   });
 
-  test("modules create", () => {
-    const result = builder.build({
+  test("modules create", async () => {
+    const result = await builder.build({
       modules: {
         module1: {
           builder: mockModule,
@@ -31,8 +31,8 @@ describe(Builder.name, () => {
     expect((result["module2"] as MockModule).props).toEqual({ zoo: "boo" });
   });
 
-  test("dependencies inject", () => {
-    const result = builder.build({
+  test("dependencies inject", async () => {
+    const result = await builder.build({
       modules: {
         a: {
           builder: mockModule,
@@ -58,22 +58,23 @@ describe(Builder.name, () => {
     );
   });
 
-  test("throw error if dependency missing", () => {
-    expect(() =>
-      builder.build({
-        modules: { a: { builder: mockModule, dependencies: ["b", "c"] } },
-      })
-    ).toThrowError(strings.error.missingDependencies(["b", "c"]));
+  test("throw error if dependency missing", async () => {
+    expect(
+      async () =>
+        await builder.build({
+          modules: { a: { builder: mockModule, dependencies: ["b", "c"] } },
+        })
+    ).rejects.toThrowError(strings.error.missingDependencies(["b", "c"]));
   });
 
-  test("throw error if builder missing", () => {
-    expect(() => builder.build({ modules: { a: {} } })).toThrowError(
-      strings.error.missingBuilder("a")
-    );
+  test("throw error if builder missing", async () => {
+    expect(
+      async () => await builder.build({ modules: { a: {} } })
+    ).rejects.toThrowError(strings.error.missingBuilder("a"));
   });
 
-  test("build with overrides", () => {
-    const result = builder.build(
+  test("build with overrides", async () => {
+    const result = await builder.build(
       {
         modules: {
           a: {
@@ -108,6 +109,13 @@ describe(Builder.name, () => {
     });
     expect((result["b"] as MockModule).props).toEqual({ doo: "zoo" });
     expect((result["c"] as MockModule).props).toEqual({ goo: "dfd" });
+  });
+
+  test("await builder functions", async () => {
+    const result = await builder.build({
+      modules: { a: { builder: async (props) => new MockModule(props) } },
+    });
+    expect(result["a"]).instanceOf(MockModule);
   });
 });
 

@@ -6,8 +6,6 @@ The library helps build modular monolith
 
 The Builder builds modules one at a time, passing arguments and dependencies to the builder function
 
-> ⚠️ **Warning:** all dependencies in dependencies objects will be available only after the completion of the Builder.build method, so you should avoid getting dependencies in builder functions
-
 ```JavaScript
 import { Builder, defineModule } from "@atlz253/frontier";
 import { Main } from "./src/main/index.js";

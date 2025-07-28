@@ -1,3 +1,4 @@
+import { topologicalSort } from "./graph";
 import strings from "./strings";
 import { cloneDeep } from "lodash";
 
@@ -73,6 +74,19 @@ export class Builder {
     return Array.from(this.#expectDependencies.keys());
   }
 
+  get #dependencyGraph() {
+    const dependencyGraph = new Map<string, string[]>();
+    if (this.#config.modules)
+      Object.entries(this.#config.modules).forEach(([name, options]) => {
+        dependencyGraph.set(name, options.dependencies || []);
+      });
+    return dependencyGraph;
+  }
+
+  get #topologicallySortedDependencies() {
+    return topologicalSort(this.#dependencyGraph);
+  }
+
   async build(config: BuildConfig, ...overrides: BuildConfig[]) {
     this.#clear();
     this.#config =
@@ -90,13 +104,14 @@ export class Builder {
   }
 
   async #buildModules(config: BuildConfig) {
-    if (config.modules)
-      for (const [name, options] of Object.entries(config.modules)) {
-        this.#resolveExpectDependencies({
-          name,
-          module: await this.#buildModule({ name, options }),
-        });
-      }
+    if (!config.modules) return;
+    for (const name of this.#topologicallySortedDependencies) {
+      const options = config.modules[name];
+      this.#resolveExpectDependencies({
+        name,
+        module: await this.#buildModule({ name, options }),
+      });
+    }
   }
 
   #resolveExpectDependencies({

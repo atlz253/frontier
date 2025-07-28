@@ -64,7 +64,7 @@ describe(Builder.name, () => {
   });
 
   test("throw error if dependency missing", async () => {
-    expect(
+    await expect(
       async () =>
         await builder.build({
           modules: {
@@ -75,7 +75,7 @@ describe(Builder.name, () => {
   });
 
   test("throw error if builder missing", async () => {
-    expect(
+    await expect(
       async () =>
         await builder.build({
           modules: { a: defineModule({}) },

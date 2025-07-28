@@ -6,5 +6,7 @@ export default {
       `couldn't find a module with name: ${name}`,
     missingBuilder: (name: string) =>
       `builder could not found for module: ${name}`,
+    cyclicalDependence: (node: string) =>
+      `cyclical dependence detected: ${node}`,
   },
 };

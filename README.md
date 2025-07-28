@@ -10,7 +10,7 @@ The Builder builds modules one at a time, passing arguments and dependencies to 
 import { Builder, defineModule } from "@atlz253/frontier";
 import { Main } from "./src/main/index.js";
 import { Orders } from "./src/orders/index.js";
-import { Cart } from "./src/cart/index.js";
+import { Cart, CloudCart } from "./src/cart/index.js";
 
 const modules = new Builder().build({
   modules: {
@@ -34,6 +34,12 @@ const modules = new Builder().build({
       },
     }),
     cart: defineModule({
+      builder: (props) => new CloudCart(props), // new CloudCart({dependencies: {fallback: Cart}})
+      dependencies: {
+        fallback: "cartFallback"
+      }
+    }),
+    cartFallback: defineModule({
       builder: (props) => new Cart(props), // new Cart({dependencies: {orders: Orders}})
       dependencies: ["orders"]
     })

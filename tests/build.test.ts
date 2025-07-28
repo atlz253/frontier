@@ -129,6 +129,27 @@ describe(Builder.name, () => {
     });
     expect(result["a"]).instanceOf(MockModule);
   });
+
+  test("object dependencies config", async () => {
+    const result = await builder.build({
+      modules: {
+        a: defineModule({
+          builder: mockModule,
+          dependencies: { foo: "b", bar: "c" },
+        }),
+        b: defineModule({ builder: mockModule }),
+        c: defineModule({ builder: mockModule }),
+      },
+    });
+    expect((result["a"] as MockModule).props.dependencies.foo).toEqual(
+      result["b"] as MockModule
+    );
+    expect((result["a"] as MockModule).props.dependencies.bar).toEqual(
+      result["c"] as MockModule
+    );
+    expect((result["a"] as MockModule).props.dependencies.b).toBe(undefined);
+    expect((result["a"] as MockModule).props.dependencies.c).toBe(undefined);
+  });
 });
 
 describe(ConfigComposer.name, () => {

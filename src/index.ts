@@ -2,9 +2,11 @@ import { topologicalSort } from "./graph";
 import strings from "./strings";
 import { cloneDeep } from "lodash";
 
+type DependenciesConfig = string[] | Record<string, string>;
+
 interface ModuleConfig<Arguments extends object = {}, Result = unknown> {
   arguments: Omit<Arguments, "dependencies">;
-  dependencies: string[];
+  dependencies: DependenciesConfig;
   builder: (props: Arguments) => Result | Promise<Result>;
 }
 
@@ -68,7 +70,10 @@ export class ConfigComposer {
 export class Builder {
   #config: BuildConfig = {};
   #modules: { [name: string]: unknown } = {};
-  #expectDependencies: Map<string, { [key: string]: unknown }[]> = new Map();
+  #expectDependencies: Map<
+    string,
+    { name: string; dependencies: { [key: string]: unknown } }[]
+  > = new Map();
 
   get #missingDependencies() {
     return Array.from(this.#expectDependencies.keys());
@@ -78,7 +83,12 @@ export class Builder {
     const dependencyGraph = new Map<string, string[]>();
     if (this.#config.modules)
       Object.entries(this.#config.modules).forEach(([name, options]) => {
-        dependencyGraph.set(name, options.dependencies || []);
+        dependencyGraph.set(
+          name,
+          Array.isArray(options.dependencies)
+            ? options.dependencies
+            : Array.from(Object.values(options.dependencies || {}))
+        );
       });
     return dependencyGraph;
   }
@@ -122,7 +132,9 @@ export class Builder {
     module: unknown;
   }) {
     if (this.#expectDependencies.has(name)) {
-      this.#expectDependencies.get(name)?.forEach((m) => (m[name] = module));
+      this.#expectDependencies
+        .get(name)
+        ?.forEach((m) => (m.dependencies.name = module));
       this.#expectDependencies.delete(name);
     }
   }
@@ -143,16 +155,38 @@ export class Builder {
     return result;
   }
 
-  #dependencies(dependencies: string[] | undefined) {
+  #dependencies(dependencies: DependenciesConfig | undefined) {
     if (dependencies === undefined) return undefined;
+    return Array.isArray(dependencies)
+      ? this.#arrayDependencies(dependencies)
+      : this.#objectDependencies(dependencies);
+  }
+
+  #arrayDependencies(dependencies: string[]) {
     const result: { [name: string]: unknown } = {};
     dependencies.forEach((d) =>
       d in this.#modules
         ? (result[d] = this.#modules[d])
         : this.#expectDependencies.has(d)
-        ? this.#expectDependencies.get(d)?.push(result)
-        : this.#expectDependencies.set(d, [result])
+        ? this.#expectDependencies
+            .get(d)
+            ?.push({ name: d, dependencies: result })
+        : this.#expectDependencies.set(d, [{ name: d, dependencies: result }])
     );
+    return result;
+  }
+
+  #objectDependencies(dependencies: Record<string, string>) {
+    const result: { [name: string]: unknown } = {};
+    for (const [n, d] of Object.entries(dependencies)) {
+      d in this.#modules
+        ? (result[n] = this.#modules[d])
+        : this.#expectDependencies.has(d)
+        ? this.#expectDependencies
+            .get(d)
+            ?.push({ name: n, dependencies: result })
+        : this.#expectDependencies.set(d, [{ name: n, dependencies: result }]);
+    }
     return result;
   }
 

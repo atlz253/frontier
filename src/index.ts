@@ -107,7 +107,10 @@ export class Builder {
     return topologicalSort(this.#dependencyGraph);
   }
 
-  async build(config: BuildConfig, ...overrides: BuildConfig[]) {
+  async build<Modules extends object = { [name: string]: unknown }>(
+    config: BuildConfig,
+    ...overrides: BuildConfig[]
+  ): Promise<Modules> {
     this.#clear();
     this.#config =
       overrides.length === 0
@@ -115,7 +118,7 @@ export class Builder {
         : new ConfigComposer().override(config, ...overrides);
     await this.#buildModules(this.#config);
     this.#throwErrorIfHasMissingDependencies();
-    return this.#modules;
+    return this.#modules as unknown as Modules;
   }
 
   #clear() {

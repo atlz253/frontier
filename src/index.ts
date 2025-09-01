@@ -20,6 +20,16 @@ export function defineModule<Arguments extends object, Result>(
   return config;
 }
 
+/**
+ * Helps to create a builder based on a class
+ */
+export function classBuilder<
+  Arguments extends Array<unknown>,
+  Instance extends object
+>(Cls: new (...args: Arguments) => Instance) {
+  return (...args: ConstructorParameters<typeof Cls>) => new Cls(...args);
+}
+
 export class ConfigComposer {
   #result: BuildConfig = { modules: {} };
 

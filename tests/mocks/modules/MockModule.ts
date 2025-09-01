@@ -1,3 +1,5 @@
+import { classBuilder } from "../../../src";
+
 export class MockModule {
   props;
 
@@ -6,4 +8,4 @@ export class MockModule {
   }
 }
 
-export const mockModule = (props) => new MockModule(props);
+export const mockModule = classBuilder(MockModule);

@@ -7,15 +7,15 @@ The library helps build modular monolith
 The Builder builds modules one at a time, passing arguments and dependencies to the builder function
 
 ```JavaScript
-import { Builder, defineModule } from "@atlz253/frontier";
-import { Main } from "./src/main/index.js";
+import { Builder, defineModule, classBuilder } from "@atlz253/frontier";
+import { initMain } from "./src/main/index.js";
 import { Orders } from "./src/orders/index.js";
 import { Cart, CloudCart } from "./src/cart/index.js";
 
 const modules = new Builder().build({
   modules: {
     main: defineModule({
-      builder: (props) => new Main(props), // new Main({ logger: true, debug: false, dependencies: {orders: Orders, cart: Cart}})
+      builder: initMain, // initMain({ logger: true, debug: false, dependencies: {orders: Orders, cart: Cart}})
       arguments: {
         logger: true,
         debug: false
@@ -23,7 +23,7 @@ const modules = new Builder().build({
       dependencies: ["orders", "cart"]
     }),
     orders: defineModule({
-      builder: (props) => new Orders(props), // new Orders({db: {...}})
+      builder: classBuilder(Orders), // new Orders({db: {...}})
       arguments: {
         db: {
           host: "localhost",
@@ -34,13 +34,13 @@ const modules = new Builder().build({
       },
     }),
     cart: defineModule({
-      builder: (props) => new CloudCart(props), // new CloudCart({dependencies: {fallback: Cart}})
+      builder: classBuilder(CloudCart), // new CloudCart({dependencies: {fallback: Cart}})
       dependencies: {
         fallback: "cartFallback"
       }
     }),
     cartFallback: defineModule({
-      builder: (props) => new Cart(props), // new Cart({dependencies: {orders: Orders}})
+      builder: classBuilder(Cart), // new Cart({dependencies: {orders: Orders}})
       dependencies: ["orders"]
     })
   }

@@ -1,12 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import {
-  BuildConfig,
-  Builder,
-  ConfigComposer,
-  defineModule,
-} from "../src/index";
+import { BuildConfig, Builder, ConfigComposer, defineModule } from "../index";
 import { mockModule, MockModule } from "./mocks/modules/MockModule";
-import strings from "../src/strings";
+import strings from "../strings";
 
 describe(Builder.name, () => {
   let builder = new Builder();
@@ -52,15 +47,18 @@ describe(Builder.name, () => {
         }),
       },
     });
-    expect((result["a"] as MockModule).props.dependencies["b"]).toEqual(
-      result["b"]
-    );
-    expect((result["a"] as MockModule).props.dependencies["c"]).toEqual(
-      result["c"]
-    );
-    expect((result["c"] as MockModule).props.dependencies["b"]).toEqual(
-      result["b"]
-    );
+    expect(
+      (result["a"] as MockModule<{ dependencies: { b: MockModule } }>).props
+        .dependencies["b"]
+    ).toEqual(result["b"]);
+    expect(
+      (result["a"] as MockModule<{ dependencies: { c: MockModule } }>).props
+        .dependencies["c"]
+    ).toEqual(result["c"]);
+    expect(
+      (result["c"] as MockModule<{ dependencies: { b: MockModule } }>).props
+        .dependencies["b"]
+    ).toEqual(result["b"]);
   });
 
   test("throw error if dependency missing", async () => {
@@ -141,14 +139,22 @@ describe(Builder.name, () => {
         c: defineModule({ builder: mockModule }),
       },
     });
-    expect((result["a"] as MockModule).props.dependencies.foo).toEqual(
-      result["b"] as MockModule
-    );
-    expect((result["a"] as MockModule).props.dependencies.bar).toEqual(
-      result["c"] as MockModule
-    );
-    expect((result["a"] as MockModule).props.dependencies.b).toBe(undefined);
-    expect((result["a"] as MockModule).props.dependencies.c).toBe(undefined);
+    expect(
+      (result["a"] as MockModule<{ dependencies: { foo: MockModule } }>).props
+        .dependencies.foo
+    ).toEqual(result["b"] as MockModule);
+    expect(
+      (result["a"] as MockModule<{ dependencies: { bar: MockModule } }>).props
+        .dependencies.bar
+    ).toEqual(result["c"] as MockModule);
+    expect(
+      (result["a"] as MockModule<{ dependencies: { b: undefined } }>).props
+        .dependencies.b
+    ).toBe(undefined);
+    expect(
+      (result["a"] as MockModule<{ dependencies: { c: undefined } }>).props
+        .dependencies.c
+    ).toBe(undefined);
   });
 });
 
@@ -181,8 +187,8 @@ describe(ConfigComposer.name, () => {
   });
 
   test("module options override", () => {
-    const builder1 = (props) => new MockModule(props);
-    const builder2 = (props) => new MockModule(props);
+    const builder1 = mockModule;
+    const builder2 = mockModule;
     expect(
       composer.override(
         {

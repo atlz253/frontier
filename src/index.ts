@@ -4,19 +4,39 @@ import { cloneDeep } from "lodash";
 
 type DependenciesConfig = string[] | Record<string, string>;
 
-interface ModuleConfig<Arguments extends object = {}, Result = unknown> {
+export interface ModuleConfig<
+  Arguments extends object = { [name: string]: unknown },
+  Result = unknown
+> {
   arguments: Omit<Arguments, "dependencies">;
   dependencies: DependenciesConfig;
   builder: (props: Arguments) => Result | Promise<Result>;
 }
 
-export interface BuildConfig {
-  modules?: Record<string, Partial<ModuleConfig<any, any>>>;
+export interface BuildConfig<
+  Modules extends Record<string, Partial<ModuleConfig<any, any>>> = Record<
+    string,
+    Partial<ModuleConfig<any, any>>
+  >
+> {
+  modules?: Modules;
 }
 
+/**
+ * Helps to infer module types
+ */
 export function defineModule<Arguments extends object, Result>(
   config: Partial<ModuleConfig<Arguments, Result>>
 ): Partial<ModuleConfig<Arguments, Result>> {
+  return config;
+}
+
+/**
+ * Helps to infer configuration types
+ */
+export function defineConfig<
+  Modules extends Record<string, Partial<ModuleConfig<any, any>>>
+>(config: BuildConfig<Modules>) {
   return config;
 }
 

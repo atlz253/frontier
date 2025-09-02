@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { topologicalSort } from "../src/graph";
-import strings from "../src/strings";
+import { topologicalSort } from "../graph";
+import strings from "../strings";
 
 describe(topologicalSort.name, () => {
   test("should sort a simple graph", () => {

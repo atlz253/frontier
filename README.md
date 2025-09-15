@@ -60,7 +60,7 @@ new Builder.build(
     modules: {
       a: defineModule({
         builder: builder1,
-        arguments: { foo: "bar", bar: "baz" },
+        arguments: { foo: "bar", bar: "baz", o: {a: "a", b: "b"} },
         dependencies: ["b", "c"],
       }),
     },
@@ -69,7 +69,7 @@ new Builder.build(
     modules: {
       a: defineModule({
         builder: builder2,
-        arguments: { foo: "zoo", dee: "gee" },
+        arguments: { foo: "zoo", dee: "gee", o: {b: "o", c: "c"} },
         dependencies: ["e", "f"],
       }),
     },
@@ -80,7 +80,7 @@ new Builder.build(
   modules: {
     a: {
       builder: builder2,
-      arguments: { foo: "zoo", bar: "baz", dee: "gee" },
+      arguments: { foo: "zoo", bar: "baz", dee: "gee", o: {a: "a", b: "o", c: "c"} },
       dependencies: ["e", "f"],
     },
   },

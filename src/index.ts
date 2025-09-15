@@ -1,6 +1,6 @@
 import { topologicalSort } from "./graph";
 import strings from "./strings";
-import { cloneDeep } from "lodash";
+import { cloneDeep, merge } from "lodash";
 
 type DependenciesConfig = string[] | Record<string, string>;
 
@@ -75,15 +75,10 @@ export class ConfigComposer {
     const result = cloneDeep(this.#result.modules[name]);
     if ("builder" in options) result.builder = options.builder;
     if ("arguments" in options) {
-      if ("arguments" in result && options.arguments) {
-        Object.entries(options.arguments).forEach(([key, value]) => {
-          result.arguments
-            ? (result.arguments[key] = value)
-            : (result.arguments = { [key]: value });
-        });
-      } else {
-        result.arguments = cloneDeep(options.arguments);
-      }
+      result.arguments =
+        "arguments" in result && options.arguments
+          ? merge(result.arguments, options.arguments)
+          : cloneDeep(options.arguments);
     }
     if ("dependencies" in options)
       result.dependencies = cloneDeep(options.dependencies);

@@ -87,7 +87,7 @@ describe(Builder.name, () => {
         modules: {
           a: defineModule({
             builder: mockModule,
-            arguments: { foo: "baz" },
+            arguments: { foo: "baz", obj: { a: "a", b: "b" } },
             dependencies: ["b", "c"],
           }),
           b: defineModule({
@@ -108,11 +108,19 @@ describe(Builder.name, () => {
             dependencies: ["b"],
           }),
         },
+      },
+      {
+        modules: {
+          a: defineModule({
+            arguments: { obj: { b: "o", c: "c" } },
+          }),
+        },
       }
     );
     expect((result["a"] as MockModule).props).toEqual({
       foo: "test",
       zoo: "doo",
+      obj: { a: "a", b: "o", c: "c" },
       dependencies: { b: result["b"] },
     });
     expect((result["b"] as MockModule).props).toEqual({ doo: "zoo" });
